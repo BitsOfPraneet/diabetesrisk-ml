@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Risk Result &middot; DiabetesRisk ML</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #0F2A4A;
+      --navy-mid:  #1A3F6F;
+      --slate:     #EEF2F7;
+      --border:    #D0DAE8;
+      --text:      #1C2B3A;
+      --muted:     #5A718A;
+      --white:     #FFFFFF;
+      --red:       #D63031;
+      --red-bg:    #FFF0F0;
+      --red-brd:   #FFB8B8;
+      --green:     #00B894;
+      --green-bg:  #F0FBF8;
+      --green-brd: #A8E6DA;
+      --amber:     #E17055;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--slate);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--navy);
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header .brand { color: var(--white); }
+    header .brand-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2rem;
+    }
+    header .brand-sub {
+      font-size: 0.72rem;
+      color: #93B4D4;
+      margin-top: 1px;
+    }
+
+    main {
+      flex: 1;
+      max-width: 660px;
+      width: 100%;
+      margin: 40px auto 60px;
+      padding: 0 20px;
+    }
+
+    /* Risk banner — colour set by class added in Python, not Jinja attribute */
+    .risk-banner {
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      border: 2px solid;
+    }
+    .risk-banner.high {
+      background: var(--red-bg);
+      border-color: var(--red-brd);
+    }
+    .risk-banner.low {
+      background: var(--green-bg);
+      border-color: var(--green-brd);
+    }
+
+    .risk-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.8rem;
+      color: var(--white);
+    }
+    .risk-banner.high .risk-icon { background: var(--red); }
+    .risk-banner.low  .risk-icon { background: var(--green); }
+
+    .risk-text { flex: 1; }
+    .risk-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .risk-banner.high .risk-label { color: var(--red); }
+    .risk-banner.low  .risk-label { color: var(--green); }
+
+    .risk-verdict {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.2rem;
+      color: var(--navy);
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+
+    .conf-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .conf-label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+    .conf-track {
+      flex: 1;
+      height: 7px;
+      background: #D0DAE8;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .conf-fill { height: 100%; border-radius: 99px; }
+    .risk-banner.high .conf-fill { background: var(--red); }
+    .risk-banner.low  .conf-fill { background: var(--green); }
+    .conf-pct { font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 2px 12px rgba(15,42,74,0.07);
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.15rem;
+      color: var(--navy);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .metric-pill {
+      background: var(--slate);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .metric-pill.accent {
+      background: var(--navy);
+      border-color: var(--navy);
+    }
+    .mp-val {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--navy);
+      line-height: 1;
+    }
+    .metric-pill.accent .mp-val { color: var(--white); font-size: 1.6rem; }
+    .mp-lbl {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+    .metric-pill.accent .mp-lbl { color: #93B4D4; }
+
+    .class-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .class-table th {
+      background: var(--slate);
+      font-weight: 600;
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .class-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .class-table tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 99px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .badge-green {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid var(--green-brd);
+    }
+    .badge-red {
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid var(--red-brd);
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0 24px;
+      font-size: 0.83rem;
+    }
+    .input-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .ir-key { color: var(--muted); }
+    .ir-val { font-weight: 600; color: var(--navy); }
+
+    .disclaimer {
+      background: #FFF8E7;
+      border-left: 4px solid var(--amber);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.8rem;
+      color: #6B4C1E;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--navy);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 11px 24px;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .back-btn:hover { background: var(--navy-mid); }
+
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 520px) {
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+      .input-grid   { grid-template-columns: 1fr; }
+      .risk-banner  { flex-direction: column; text-align: center; }
+      .conf-row     { justify-content: center; }
+      .card { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="34" height="34" rx="8" fill="#1A3F6F"/>
+    <path d="M17 8v18M8 17h18" stroke="#00B894" stroke-width="2.8" stroke-linecap="round"/>
+    <circle cx="17" cy="17" r="6" stroke="#93B4D4" stroke-width="1.5" fill="none"/>
+  </svg>
+  <div class="brand">
+    <div class="brand-title">DiabetesRisk ML</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Risk Banner: class is set via Jinja ternary on the div directly -->
+  <div class="risk-banner {{ 'high' if result.prediction == 'High Risk' else 'low' }}">
+    <!-- CORRECT — plain Unicode characters, no entities -->
+<div class="risk-icon">
+  {% if result.prediction == 'High Risk' %}⚠{% else %}✓{% endif %}
+</div>
+    <div class="risk-text">
+      <div class="risk-label">Prediction Result</div>
+      <div class="risk-verdict">{{ result.prediction }}</div>
+      <div class="conf-row">
+        <span class="conf-label">Model confidence</span>
+        <div class="conf-track">
+          <div class="conf-fill" style="width: {{ result.confidence }}%"></div>
+        </div>
+        <span class="conf-pct">{{ result.confidence }}%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>&#9888; Not a medical diagnosis.</strong> This prediction is generated
+    by a Random Forest model trained on the Pima Indians Diabetes Dataset for
+    educational purposes only. Consult a qualified healthcare professional for
+    any health concerns.
+  </div>
+
+  <!-- Model Metrics -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="18" height="18" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
+        <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0
+                 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2
+                 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2
+                 2 0 01-2-2z"/>
+      </svg>
+      Model Performance
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-pill accent">
+        <div class="mp-val">{{ result.metrics.accuracy }}%</div>
+        <div class="mp-lbl">Overall Accuracy</div>
+      </div>
+      <div class="metric-pill">
+        <div class="mp-val">{{ result.metrics.f1_1 }}</div>
+        <div class="mp-lbl">F1 Score<br>(Diabetes)</div>
+      </div>
+      <div class="metric-pill">
+        <div class="mp-val">{{ result.metrics.f1_0 }}</div>
+        <div class="mp-lbl">F1 Score<br>(No Diabetes)</div>
+      </div>
+    </div>
+
+    <table class="class-table">
+      <thead>
+        <tr>
+          <th>Class</th>
+          <th>Precision</th>
+          <th>Recall</th>
+          <th>F1</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-green">No Diabetes</span></td>
+          <td>{{ result.metrics.precision_0 }}</td>
+          <td>{{ result.metrics.recall_0 }}</td>
+          <td>{{ result.metrics.f1_0 }}</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-red">Diabetes</span></td>
+          <td>{{ result.metrics.precision_1 }}</td>
+          <td>{{ result.metrics.recall_1 }}</td>
+          <td>{{ result.metrics.f1_1 }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Input Summary -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="18" height="18" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0
+                 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0
+                 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+      Your Input Parameters
+    </div>
+    <div class="input-grid">
+      {% set labels = {
+          "Age":                      "Age",
+          "Pregnancies":              "Pregnancies",
+          "Glucose":                  "Glucose",
+          "BloodPressure":            "Blood Pressure",
+          "SkinThickness":            "Skin Thickness",
+          "Insulin":                  "Insulin",
+          "BMI":                      "BMI",
+          "DiabetesPedigreeFunction": "Pedigree Function"
+      } %}
+      {% for k, v in values.items() %}
+      <div class="input-row">
+        <span class="ir-key">{{ labels[k] }}</span>
+        <span class="ir-val">{{ "%g"|format(v) }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <a href="/" class="back-btn">
+    <svg width="15" height="15" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    New Assessment
+  </a>
+
+</main>
+</body>
+</html>

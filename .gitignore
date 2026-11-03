@@ -1,0 +1,9 @@
+cd ~/diabetes_predictor
+cat > .gitignore << 'EOF'
+venv/
+model/
+__pycache__/
+*.pyc
+*.pkl
+.env
+EOF
