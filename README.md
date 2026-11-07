@@ -75,7 +75,7 @@ podman run -d \
   --network diabetes-net \
   -p 5000:5000 \
   -v diabetes-model-vol:/model \
-  localhost/diabetesrisk-ml:v1.2
+  localhost/diabetesrisk-ml:v1.0
 
 podman ps
 podman logs diabetes-app
@@ -95,16 +95,16 @@ podman rm diabetes-app
 ### 6. Push to Docker Hub
 ```bash
 podman login docker.io
-podman tag localhost/diabetesrisk-ml:v1.2 docker.io/YOURUSERNAME/diabetesrisk-ml:v1.2
-podman push docker.io/YOURUSERNAME/diabetesrisk-ml:v1.2
+podman tag localhost/diabetesrisk-ml:v1.2 docker.io/YOURUSERNAME/diabetesrisk-ml:v1.0
+podman push docker.io/YOURUSERNAME/diabetesrisk-ml:v1.0
 ```
 
 ### 7. Pull and run from registry
 ```bash
-podman pull docker.io/YOURUSERNAME/diabetesrisk-ml:v1.2
+podman pull docker.io/YOURUSERNAME/diabetesrisk-ml:v1.0
 podman run -d --name diabetes-app --network diabetes-net \
   -p 5000:5000 -v diabetes-model-vol:/model \
-  docker.io/YOURUSERNAME/diabetesrisk-ml:v1.2
+  docker.io/YOURUSERNAME/diabetesrisk-ml:v1.0
 ```
 
 ## Accessing the Application
@@ -118,9 +118,7 @@ Open the app in your browser:
 
 | Tag  | Change                                              |
 |------|-----------------------------------------------------|
-| v1.0 | Initial build                                       |
-| v1.1 | Template fixes (Jinja icon rendering)               |
-| v1.2 | Generic subtitle and footer text                    |
+| v1.0 | Initial Build                                       |
 
 ## Registry
 

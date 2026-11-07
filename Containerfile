@@ -1,9 +1,6 @@
 # Containerfile
 FROM python:3.11-slim
 
-LABEL maintainer="yourname@srmist.edu.in"
-LABEL description="Diabetes Risk Predictor - Linux & Container Technologies Capstone"
-
 # Set working directory
 WORKDIR /app
 
